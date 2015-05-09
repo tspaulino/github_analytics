@@ -1,0 +1,1 @@
+require_relative '../lib/github_analytics.rb'

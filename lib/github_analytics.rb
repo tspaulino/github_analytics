@@ -7,7 +7,7 @@ class GithubAnalytics
 
   def commits(repo)
     data = do_request("/repos/#{@user}/#{repo}/stats/participation")
-    if data.nil? || data["owner"].nil?
+    if data.nil? || data["owner"].empty?
       0
     else
       sum(data['owner'])
@@ -31,4 +31,5 @@ class GithubAnalytics
     def sum(data)
       data.reduce(:+)
     end
+
 end

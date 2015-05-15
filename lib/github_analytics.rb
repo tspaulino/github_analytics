@@ -6,12 +6,8 @@ class GithubAnalytics
   end
 
   def commits(repo)
-    data = do_request("/repos/#{@user}/#{repo}/stats/participation")
-    if data.nil? || data["owner"].empty?
-      0
-    else
-      sum(data['owner'])
-    end
+    data = do_request("/repos/#{@user}/#{repo}/stats/participation").parsed_response
+    return present?(data["owner"]) ? sum(data["owner"]) : 0
   end
 
   def repos
@@ -29,7 +25,12 @@ class GithubAnalytics
     end
 
     def sum(data)
+      data.delete_if(&:nil?)
       data.reduce(:+)
+    end
+
+    def present?(data)
+      !data.nil? || !data.empty?
     end
 
 end

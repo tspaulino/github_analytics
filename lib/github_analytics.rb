@@ -1,38 +1,31 @@
-require 'github_api'
-
+require 'httparty'
 class GithubAnalytics
 
   def initialize(user)
-    @user, @repos= user, nil
+    @user = user
   end
 
-  def repo_commits(repo)
-    sum(client.repos.stats.commit_activity(user: @user, repo: repo).map{ |response|
-      if response.respond_to?(:total) and !response.total.nil?
-        response.total
-      else
-        0
-      end
-    })
+  def commits(repo)
+    data = do_request("/repos/#{@user}/#{repo}/stats/participation")
+    if data.nil? || data["owner"].nil?
+      0
+    else
+      sum(data['owner'])
+    end
+  end
+
+  def repos
+    @repos ||= do_request("/users/#{@user}/repos").parsed_response.map { |repo| repo['name'] }
   end
 
   def total_commits
-    commits = []
-    @repos = load_repos(@user) if @repos.nil?
-    @repos.each { |repo|
-      commits << repo_commits(repo)
-    }
-    sum(commits)
+    sum(repos.map { |repo| commits(repo) } )
   end
 
   protected
 
-    def load_repos(user)
-      client.repos.list(user: user).map(&:name)
-    end
-
-    def client
-      Github.new oauth_token: "34dede9420a069a2507cd6e611a61faf047e5216"
+    def do_request(method=:get, uri)
+      HTTParty.get("https://api.github.com#{uri}?access_token=#{ENV['GITHUB_TOKEN']}", :headers=>{"User-Agent" => "tspaulino"})
     end
 
     def sum(data)
